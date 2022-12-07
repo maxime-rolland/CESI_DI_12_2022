@@ -1,10 +1,14 @@
 print ('Raspberry Project for DI - main')
+
 import time
+
 from do_connect import *
 from do_request import *
+from do_light import *
+
 networkInfos=do_connect()
 print (networkInfos)
-url="http://maxime.learn-it.ovh/leds?mac="+networkInfos['mac']
+url="https://backend.maxime.learn-it.ovh/leds?mac="+networkInfos['mac']
 print(url)
 
 while True:
@@ -13,8 +17,13 @@ while True:
         print(json)
 
         for led in json:
+            value=0
             if led['etat']:
-                print(led['label'])
+                value=1
+            do_light(led['label'], value)
+            
         time.sleep(5)
     except:
         print ("erreur")
+        time.sleep(5)
+        #break

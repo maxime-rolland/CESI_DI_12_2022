@@ -37,7 +37,6 @@ services:
     image: node
     restart: always
     working_dir: /app
- 
     volumes:
       - ./backend:/app
     command: "npm run start"
@@ -49,6 +48,20 @@ services:
       - "traefik.http.routers.backend.service=backendService"
       - "traefik.http.services.backendService.loadBalancer.server.port=3000"
 
+  frontend:
+    image: node
+    restart: always
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    command: "yarn dev --host"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`$FRONTEND_URL`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=myresolver"
+      - "traefik.http.routers.frontend.service=frontendService"
+      - "traefik.http.services.frontendService.loadBalancer.server.port=3000"
 
   mongo:
     image: mongo

@@ -2,9 +2,11 @@ const express = require('express')
 const mongoose = require('mongoose')
 const raspberryModel = require('./models')
 
+
 const app = express()
 const port = 3000
-
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 app.get('/', (req, res) => {
   res.send('Hello World! ❤️❤️❤️❤️😭👌💻👌👌👌')
@@ -45,6 +47,30 @@ app.get('/leds', async(req, res) => {
         res.send({'result':null})
     }    
   })
+
+app.get('/raspberry/:id', async(req,res)=>{
+    let id = req.params.id
+    let toReturn={}
+    if(id){
+        let raspberry = await raspberryModel.findById(id)
+        if(raspberry){
+            toReturn=raspberry
+        }
+    }
+    res.send(toReturn)
+})
+
+app.post('/raspberry/:id/ledsChange', async (req, res)=>{
+    console.log("ledsChange")
+    console.log(req.body)
+    let raspberry = await raspberryModel.findById(req.params.id)
+    console.log(raspberry.etatLeds)
+    raspberry.etatLeds=req.body
+    console.log(raspberry.etatLeds)
+    raspberry.markModified('etatLeds')
+    await raspberry.save()
+
+})
 
 app.get('/raspberries', async(req,res)=>{
     let raspberries = await raspberryModel.find()

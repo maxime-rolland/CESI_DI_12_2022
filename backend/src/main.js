@@ -5,18 +5,24 @@ const raspberryModel = require('./models')
 const app = express()
 const port = 3000
 
+
 app.get('/', (req, res) => {
   res.send('Hello World! ❤️❤️❤️❤️😭👌💻👌👌👌')
 })
 
+// Lors d'un get sur la route /leds
 app.get('/leds', async(req, res) => {
+    // On récupère le paramètre mac passé en get
     let mac = req.query.mac
-
-    console.log({mac})
+    
     if(mac){
         let raspberry = await raspberryModel.findOne({"mac":mac})
         if(!raspberry){
-            raspberry = await raspberryModel.create({"mac":mac,"nom":"default", etatLeds:[,
+            raspberry = await raspberryModel.create(
+                {
+                "mac":mac,
+                "nom":mac, 
+                etatLeds:[,
                     {
                         label:"Jaune",
                         etat:true
@@ -31,15 +37,19 @@ app.get('/leds', async(req, res) => {
                     },
                 ]})
         }
-        
-        console.log({raspberry})
+        raspberry.dateDerniereConnexion=Date.now()
+        await raspberry.save()
         let result = raspberry.etatLeds
         res.send(result)
-    }
-    
-
-    
+    }else{
+        res.send({'result':null})
+    }    
   })
+
+app.get('/raspberries', async(req,res)=>{
+    let raspberries = await raspberryModel.find()
+    res.send(raspberries)
+})
   
   mongoose
   .connect("mongodb://mongo:27017/ledsDB", { 

@@ -1,2 +1,4 @@
 desktop.ini
-backend/db-data
+db-data
+letsencrypt
+.env

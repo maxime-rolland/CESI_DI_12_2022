@@ -25,3 +25,6 @@ echo \
 # On remet à jour notre cache APT pour tenir compte des paquets présents sur le nouveau dépot
 apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+adduser ubuntu docker
+exit

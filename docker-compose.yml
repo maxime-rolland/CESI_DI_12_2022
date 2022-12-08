@@ -37,6 +37,15 @@ services:
       - ./backend/app:/app
     command: "npm install"
 
+  ## Service utilisé au démarrage uniquement pour installer les dépendances nécessaires
+  ## au fonctionnement de notre backend
+  installFrontend:
+    image: node
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    command: "yarn install"
+
   ## Si on utilise une image custom pour lancer le backend
   # backend:
   #   build:

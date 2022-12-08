@@ -1,4 +1,4 @@
-# Make GET request
+# Fonction qui permet de faire des requetes GET et de récupèrer du JSON
 import urequests
 
 def do_request(url):

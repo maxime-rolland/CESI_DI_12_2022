@@ -1,3 +1,5 @@
+# Fonction qui définit nos LED à partir des GPIO
+# Elle active/desactive une LED à partir d'un état (0/1)
 import machine
 
 rouge = machine.Pin(2, machine.Pin.OUT)

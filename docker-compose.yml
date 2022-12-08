@@ -1,6 +1,9 @@
 version: '3.1'
 
 services:
+  # On utilise traefik pour faire un reverse proxy (Récupèrer les connexions entrantes
+  # et les rediriger vers le bon service), il permet également l'obtention de certificat
+  # à l'aide de letsEncrypt, attention à modifier votre fichier .env
   reverse-proxy:
     image: traefik:latest
     container_name: "traefik"
@@ -19,35 +22,64 @@ services:
 
     ports:
       - 80:80
-      - 8080:8080
       - 443:443
     volumes:
       - "./letsencrypt:/letsencrypt"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     restart: always
 
+  ## Service utilisé au démarrage uniquement pour installer les dépendances nécessaires
+  ## au fonctionnement de notre backend
   installBackend:
     image: node
     working_dir: /app
     volumes:
-      - ./backend:/app
+      - ./backend/app:/app
     command: "npm install"
 
+  ## Si on utilise une image custom pour lancer le backend
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   image: custom_backend_image
+  #   restart: always
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.backend.rule=Host(`$BACKEND_URL`)"
+  #     - "traefik.http.routers.backend.entrypoints=websecure"
+  #     - "traefik.http.routers.backend.tls.certresolver=myresolver"
+  #     - "traefik.http.routers.backend.service=backendService"
+  #     - "traefik.http.services.backendService.loadBalancer.server.port=3000"
+
+  # Si on utilise l'image node générique pour lancer le backend
+  # On utilise une image de node, on mappe notre applicatif dans le /app du conteneur
+  # On execute le script start de notre package json (nodemon pour dev)
+  # Grace à traefik on a un reverse proxy sur le nom de domaine du backend (.env)
+  # On obtient le certificat, on redirige le flux vers le port 3000 du conteneur
   backend:
     image: node
     restart: always
     working_dir: /app
     volumes:
-      - ./backend:/app
+      - ./backend/app:/app
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: $MONGO_INITDB_ROOT_USERNAME
+      MONGO_INITDB_ROOT_PASSWORD: $MONGO_INITDB_ROOT_PASSWORD
     command: "npm run start"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`$BACKEND_URL`)"
+      # - "traefik.http.routers.backend.rule=Host(`$FRONTEND_URL`) && PathPrefix(`/api`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=myresolver"
       - "traefik.http.routers.backend.service=backendService"
       - "traefik.http.services.backendService.loadBalancer.server.port=3000"
 
+  # On utilise une image de node, on mappe notre applicatif dans le /app du conteneur
+  # On execute le script dev (--host permet de répondre à autre chose que localhost) de notre package json (vitejs)
+  # Grace à traefik on a un reverse proxy sur le nom de domaine du frontend (.env)
+  # On obtient le certificat, on redirige le flux vers le port 3000 du conteneur
   frontend:
     image: node
     restart: always
@@ -63,21 +95,39 @@ services:
       - "traefik.http.routers.frontend.service=frontendService"
       - "traefik.http.services.frontendService.loadBalancer.server.port=3000"
 
+  ## Service de base de données objet, basé sur mongoDB
+  ## On utilise des variables d'environnement (voir documentation mongo sur dockerHUB)
+  ## https://hub.docker.com/_/mongo
+  ## On mappe un volume afin de rendre la donnée persistante
   mongo:
     image: mongo
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_ROOT_USERNAME: $MONGO_INITDB_ROOT_USERNAME
+      MONGO_INITDB_ROOT_PASSWORD: $MONGO_INITDB_ROOT_PASSWORD
     volumes:
       - ./db-data:/data/db
 
+  ## Outil d'administration permettant de manipuler les bases mongo en interface web
+  ## Je passe en variable d'environnement les informations de connexion à mongoDB
+  ## J'utilise le npm DNS interne à docker (ici le nom du service à savoir "mongo")
+  ## J'utilise traefik pour rediriger le traffic depuis l'url d'administration (voir .env)
+  ## vers le port 8081
+  ## J'utilise traefik pour générer du certificat ssl
+  ## J'utilise traefik pour générer une protection simple basée sur htaccess (user:test, mdp: test)
   mongo-express:
     image: mongo-express
     restart: always
-    ports:
-      - 8081:8081
     environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_ADMINUSERNAME: $MONGO_INITDB_ROOT_USERNAME
+      ME_CONFIG_MONGODB_ADMINPASSWORD: $MONGO_INITDB_ROOT_PASSWORD
       ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.admin.rule=Host(`$ADMIN_URL`)"
+      - "traefik.http.routers.admin.entrypoints=websecure"
+      - "traefik.http.routers.admin.tls.certresolver=myresolver"
+      - "traefik.http.routers.admin.service=adminService"
+      - "traefik.http.services.adminService.loadBalancer.server.port=8081"
+      - "traefik.http.routers.admin.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=test:$$2y$$12$$ci.4U63YX83CwkyUrjqxAucnmi2xXOIlEF6T/KdP9824f1Rf1iyNG"

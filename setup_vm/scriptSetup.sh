@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # ON suit la procédure officielle : https://docs.docker.com/engine/install/ubuntu/
 # On désinstalle les anciennes version de docker
 apt-get remove -y docker docker-engine docker.io containerd runc
@@ -26,5 +25,6 @@ echo \
 apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
+# On ajoute l'utilisateur ubuntu à docker pour pouvoir utiliser docker sans sudo
 adduser ubuntu docker
 exit

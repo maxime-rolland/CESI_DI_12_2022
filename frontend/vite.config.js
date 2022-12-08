@@ -31,9 +31,12 @@ export default defineConfig({
     ],
   },
   server: {
+    // Résolution du problème CORS 
+    // On récupère l'URL du backend en var d'env
+    // On créé un proxy vers /api (attention à ne pas utiliser la route plus tard)
     proxy: {
       "/api": {
-        target: "https://backend.maxime.learn-it.ovh",
+        target: "https://"+process.env.BACKEND_URL,
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ""),

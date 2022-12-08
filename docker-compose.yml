@@ -86,6 +86,8 @@ services:
     working_dir: /app
     volumes:
       - ./frontend:/app
+    environment:
+      BACKEND_URL: $BACKEND_URL
     command: "yarn dev --host"
     labels:
       - "traefik.enable=true"
@@ -121,7 +123,7 @@ services:
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: $MONGO_INITDB_ROOT_USERNAME
       ME_CONFIG_MONGODB_ADMINPASSWORD: $MONGO_INITDB_ROOT_PASSWORD
-      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+      ME_CONFIG_MONGODB_URL: "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@mongo:27017/"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.admin.rule=Host(`$ADMIN_URL`)"

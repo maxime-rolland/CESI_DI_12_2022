@@ -2,7 +2,6 @@
   <v-app>
     <v-main>
       <RaspberriesVue/>
-      
     </v-main>
   </v-app>
 </template>

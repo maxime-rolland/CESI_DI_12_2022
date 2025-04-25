@@ -1,5 +1,3 @@
-version: '3.1'
-
 services:
   # On utilise traefik pour faire un reverse proxy (Récupèrer les connexions entrantes
   # et les rediriger vers le bon service), il permet également l'obtention de certificat
@@ -27,24 +25,6 @@ services:
       - "./letsencrypt:/letsencrypt"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     restart: always
-
-  ## Service utilisé au démarrage uniquement pour installer les dépendances nécessaires
-  ## au fonctionnement de notre backend
-  installBackend:
-    image: node
-    working_dir: /app
-    volumes:
-      - ./backend/app:/app
-    command: "npm install"
-
-  ## Service utilisé au démarrage uniquement pour installer les dépendances nécessaires
-  ## au fonctionnement de notre backend
-  installFrontend:
-    image: node
-    working_dir: /app
-    volumes:
-      - ./frontend:/app
-    command: "yarn install"
 
   ## Si on utilise une image custom pour lancer le backend
   # backend:
